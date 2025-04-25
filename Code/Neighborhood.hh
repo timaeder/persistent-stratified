@@ -94,8 +94,7 @@ std::list<std::vector< std::vector<int>>> CVRNeighborhood
     return graphs;
 } 
 
-std::list<std::vector< std::vector<int>>> BndNeighborhood
-( 
+std::list<std::vector<std::vector<int>>> BndNeighborhood(
     const std::vector<std::vector<long double>>& LS,
     const long double& epsilon
 )
@@ -103,64 +102,63 @@ std::list<std::vector< std::vector<int>>> BndNeighborhood
     int k = LS.size();
     long double dist = 0.0;
     std::vector<long double> m(LS[0].size());
-    std::vector<long double>::const_iterator first;
-    std::vector<long double>::const_iterator last;
-    std::vector<long double>::const_iterator first2;
     std::vector<std::set<int>> graph1(k);
     std::vector<std::set<int>> graph2(k);
 
-    for(int i = 0; i < k; i++)
+    for (int i = 0; i < k; i++)
     {
-        if ((0.5*epsilon - vectorDistance(LS[i].begin(),LS[i].end(),LS[0].begin())) < 0.5*epsilon)
+        if ((0.5 * epsilon - vectorDistance(LS[i].begin(), LS[i].end(), LS[0].begin())) < 0.5 * epsilon)
         {
+            graph2[i].insert(i);
+            graph1[i].insert(i);
 
-        graph2[i].insert(i);
-        graph1[i].insert(i);
-        for (int j = i+1; j < k; j++)
-        {
-            first = LS[i].begin();
-            last = LS[i].end();
-            first2 = LS[j].begin();
-
-            for (int it = 0; it < m.size(); it++)
+            for (int j = i + 1; j < k; j++)
             {
-                m[it] = ((*first++) + (*first2++))/2;
-            }
+                // Compute midpoint (m)
+                auto first = LS[i].begin();
+                auto last = LS[i].end();
+                auto first2 = LS[j].begin();
 
-            if (vectorDistance(m.begin(),m.end(),LS[0].begin()) < 0.5*epsilon)
-            {
-                dist = G(LS[i],LS[j],LS[0],0.5*epsilon);
-            }
+                for (size_t it = 0; it < m.size(); it++)
+                {
+                    m[it] = ((*first++) + (*first2++)) / 2;
+                }
 
-            else
-            {
-                dist = 0.5*vectorDistance(LS[i].begin(),LS[i].end(),LS[j].begin());
-            }
+                if (vectorDistance(m.begin(), m.end(), LS[0].begin()) < 0.5 * epsilon)
+                {
+                    dist = BoundaryProjectedDistance(LS[i].begin(), LS[i].end(), LS[j].begin(), LS[0].begin(), LS[0].end(), 0.5 * epsilon);
+                }
+                else
+                {
+                    dist = 0.5 * vectorDistance(LS[i].begin(), LS[i].end(), LS[j].begin());
+                }
 
-            if (dist < 0.5*epsilon)
-            {
-                graph1[i].insert(j);
-                graph2[i].insert(j);
-                graph2[j].insert(i);
+                if (dist < 0.5 * epsilon)
+                {
+                    graph1[i].insert(j);
+                    graph2[i].insert(j);
+                    graph2[j].insert(i);
+                }
             }
-        }
         }
     }
 
+    // Convert graph1 and graph2 from sets to vectors
     std::vector<std::vector<int>> graph3;
     std::vector<std::vector<int>> graph4;
 
     for (const auto& g : graph1)
     {
-        graph3.push_back(std::vector<int> (g.begin(),g.end()));
+        graph3.push_back(std::vector<int>(g.begin(), g.end()));
     }
 
     for (const auto& g : graph2)
     {
-        graph4.push_back(std::vector<int> (g.begin(),g.end()));
+        graph4.push_back(std::vector<int>(g.begin(), g.end()));
     }
-    std::list<std::vector< std::vector<int>>> graphs;
+
+    std::list<std::vector<std::vector<int>>> graphs;
     graphs.push_back(graph3);
     graphs.push_back(graph4);
     return graphs;
-} 
+}

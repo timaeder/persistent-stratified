@@ -73,35 +73,33 @@ long double BndSimplexDiameter
     long double maxsofar = 0.0;
     long double temp = 0.0;
     std::vector<long double> m(S[0].size());
-    std::vector<long double>::const_iterator first;
-    std::vector<long double>::const_iterator last;
-    std::vector<long double>::const_iterator first2;
 
     if (d > 1)
     {
         for (int i = 0; i < d; i++)
         {
-            for (int j = i+1; j < d; j++)
+            for (int j = i + 1; j < d; j++)
             {
-                first = S[s[i]].begin();
-                last = S[s[i]].end();
-                first2 = S[s[j]].begin();
+                // Compute midpoint (m)
+                auto first = S[s[i]].begin();
+                auto last = S[s[i]].end();
+                auto first2 = S[s[j]].begin();
 
-                for (int it = 0; it < m.size(); it++)
+                for (size_t it = 0; it < m.size(); it++)
                 {
-                    m[it] = ((*first++) + (*first2++))/2;
+                    m[it] = ((*first++) + (*first2++)) / 2;
                 }
 
-                if (vectorDistance(m.begin(),m.end(),S[0].begin()) < 0.5*epsilon)
+                // Use the updated G function
+                if (vectorDistance(m.begin(), m.end(), S[0].begin()) < 0.5 * epsilon)
                 {
-                    temp = G(S[s[i]],S[s[j]],S[0],0.5*epsilon);
+                    temp = BoundaryProjectedDistance(S[s[i]].begin(), S[s[i]].end(), S[s[j]].begin(), S[0].begin(), S[0].end(), 0.5 * epsilon);
                 }
-
                 else
                 {
-                    temp = 0.5*vectorDistance(S[s[i]].begin(), S[s[i]].end(), S[s[j]].begin());
+                    temp = 0.5 * vectorDistance(S[s[i]].begin(), S[s[i]].end(), S[s[j]].begin());
                 }
-                   
+
                 if (temp > maxsofar)
                 {
                     maxsofar = temp;
@@ -111,7 +109,7 @@ long double BndSimplexDiameter
     }
     else
     {
-        temp = 0.5*epsilon - vectorDistance(S[s[0]].begin(),S[s[0]].end(),S[0].begin());
+        temp = 0.5 * epsilon - vectorDistance(S[s[0]].begin(), S[s[0]].end(), S[0].begin());
         if (temp > 0)
         {
             maxsofar = temp;
@@ -159,9 +157,14 @@ long double RelSimplexDiameter
                     m[it] = ((*first++) + (*first2++))/2;
                 }
 
-                if (vectorDistance(m.begin(),m.end(),S[0].begin()) < 0.5*epsilon)
+                if (vectorDistance(m.begin(), m.end(), S[0].begin()) < 0.5 * epsilon)
                 {
-                    temp = G(S[sigma[0]],S[sigma[1]],S[0],0.5*epsilon);
+                    temp = BoundaryProjectedDistance(
+                        S[sigma[0]].begin(), S[sigma[0]].end(),  // Iterators for S[sigma[0]]
+                        S[sigma[1]].begin(),                    // Iterator for S[sigma[1]]
+                        S[0].begin(), S[0].end(),               // Iterators for S[0]
+                        0.5 * epsilon                           // Radius
+                    );
                 }
 
                 else

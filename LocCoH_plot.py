@@ -32,19 +32,21 @@ def LocCoH_read(
         
         diag1 = []
         diag2 = []
-    
-        if(type(dat[0]) is np.ndarray):
-    
-            for j in range(0, len(dat)):
-                if (dat[j][2] == 0):
-                    if (dat[j][1] > 0.00001):
-                        diag1.append([dat[j][0], dat[j][1]])
-                        
-            for j in range(0,len(dat)):
-                if (dat[j][2] == 1):
-                    if (dat[j][1] > 0.00001):
-                        diag2.append([dat[j][0],dat[j][1]])
-    
+        
+        if len(dat):
+        
+            if(type(dat[0]) is np.ndarray):
+        
+                for j in range(0, len(dat)):
+                    if (dat[j][2] == 1):
+                        if (dat[j][1] > 0.00001):
+                            diag1.append([dat[j][0], dat[j][1]])
+                            
+                for j in range(0,len(dat)):
+                    if (dat[j][2] == 2):
+                        if (dat[j][1] > 0.00001):
+                            diag2.append([dat[j][0],dat[j][1]])
+        
     
         if(len(diag1)):
             diags1.append(diag1)
@@ -159,12 +161,14 @@ def main():
     #Insert name of the point cloud data as dataname and the output of the local homology computations as pairname.
     #If the data is not in the same repository as this python script, please specify path_data and path_output.
 
-    DC = LocCoH_read(dataname="data.txt",pairname = "LocCoH_output")
-    X = np.genfromtxt("data.txt",delimiter=",")
+    DC = LocCoH_read(dataname="R2Data.txt",pairname = "LocCoHR2_output",
+                     path_data="Data/", path_output="Data/")
+    
+    X = np.genfromtxt("Data/R2Data.txt",delimiter=",")
 
-    Phi = PhiPLH(DC[0],DC[2])
+    Phi = PhiPLH(DC[1],DC[3])
 
-    plot_data(X,HL=Phi[0])
+    plot_data(X,HL=Phi[1])
 
 
 if __name__ == "__main__":
