@@ -4,96 +4,45 @@
 #include <iostream>
 #include <algorithm>
 
+/**
+ * @brief Computes the Euclidean distance between two vectors.
+ * 
+ * @tparam Iter_T Iterator type for the first vector.
+ * @tparam Iter2_T Iterator type for the second vector.
+ * @param first Iterator to the beginning of the first vector.
+ * @param last Iterator to the end of the first vector.
+ * @param first2 Iterator to the beginning of the second vector.
+ * @return The Euclidean distance as a long double.
+ */
 template<class Iter_T, class Iter2_T>
 long double vectorDistance(Iter_T first, Iter_T last, Iter2_T first2) {
-  long double ret = 0.0;
-  while (first != last) {
-    long double dist = ((*first++) - (*first2++));
-    ret += (dist * dist);
-  }
-  return ret > 0.0 ? sqrtl(ret) : 0.0;
-}
-
-template<class Iter_T, class Iter2_T>
-long double vectorOneDistance(Iter_T first, Iter_T last, Iter2_T first2) {
-  long double ret = 0.0;
-  while (first != last) {
-    long double dist = (*first++) - (*first2++);
-    ret += std::fabs(dist);
-  }
-  return ret > 0.0 ? ret : 0.0;
-}
-
-template<class Iter_T, class Iter2_T>
-long double vectorSupDistance(Iter_T first, Iter_T last, Iter2_T first2) {
-  long double ret = 0.0;
-  while (first != last) {
-    long double dist = std::fabs((*first++) - (*first2++));
-    if (ret < dist)
-    {
-      ret = dist;
+    long double ret = 0.0;
+    while (first != last) {
+        long double dist = ((*first++) - (*first2++));
+        ret += (dist * dist);
     }
-  }
-  return ret > 0.0 ? ret : 0.0;
+    return ret > 0.0 ? std::sqrt(ret) : 0.0;
 }
 
-
-long double MinRad(std::vector<std::vector<long double>>& S)
-{
-  std::vector<long double> dist;
-  std::vector<long double> max;
-  int n = S.size();
-  for( int i = 0; i < n; i++)
-  {
-    for(int j = 0; j < n; j++)
-    {
-      dist.push_back(vectorDistance(S[i].begin(),S[i].end(),S[j].begin()));
-    }
-    max.push_back(*std::max_element(dist.begin(),dist.end()));
-    dist.clear();
-  }
-return *std::min_element(max.begin(),max.end());
-}
-
-template<class T, size_t N>
-constexpr size_t size(T (&)[N]) { return N; }
-
-
-long double MaxDist(std::vector< std::vector<long  double> >& S, std::vector<long double> p)
-{
-  long double dist = 0.0;
-  long double max = 0.0;
-  for (int i = 0; i < S.size(); i++)
-  {
-    dist = vectorDistance(p.begin(),p.end(),S[i].begin());
-    if (dist > max)
-    {
-      max = dist;
-    }
-    
-  }
-  return max;
-}
-
-template<class T> 
-class midVec
-{
-public:
-    T operator()(T &lhs, const T &rhs) 
-    {
-    return (lhs + rhs)/2;
-    }
-};
-
-
+/**
+ * @brief Computes the boundary-projected distance between points in a dataset.
+ * 
+ * @tparam Iter_T Iterator type for the input vectors.
+ * @param x_begin Iterator to the beginning of the first vector.
+ * @param x_end Iterator to the end of the first vector.
+ * @param y_begin Iterator to the beginning of the second vector.
+ * @param z_begin Iterator to the beginning of the third vector.
+ * @param z_end Iterator to the end of the third vector.
+ * @param r Radius for the boundary projection.
+ * @return The boundary-projected distance as the same type as the input.
+ */
 template <typename Iter_T>
-auto BoundaryProjectedDistance(
+typename std::iterator_traits<Iter_T>::value_type BoundaryProjectedDistance(
     Iter_T x_begin, Iter_T x_end,
     Iter_T y_begin,
     Iter_T z_begin, Iter_T z_end,
     const typename std::iterator_traits<Iter_T>::value_type& r
-) -> typename std::iterator_traits<Iter_T>::value_type
-{
+) {
     using T = typename std::iterator_traits<Iter_T>::value_type;
 
     T d = 0.0;
@@ -103,8 +52,7 @@ auto BoundaryProjectedDistance(
     // Compute midpoint (m) and difference vector (xmy)
     Iter_T x_it = x_begin;
     Iter_T y_it = y_begin;
-    while (x_it != x_end)
-    {
+    while (x_it != x_end) {
         m.push_back((*x_it + *y_it) / 2);
         xmy.push_back(*x_it - *y_it);
         ++x_it;
@@ -114,93 +62,31 @@ auto BoundaryProjectedDistance(
     // Compute z - m (zmm)
     std::vector<T> zmm;
     Iter_T z_it = z_begin;
-    auto m_it = m.begin();
-    while (z_it != z_end)
-    {
+    typename std::vector<T>::iterator m_it = m.begin();
+    while (z_it != z_end) {
         zmm.push_back(*z_it - *m_it);
         ++z_it;
         ++m_it;
     }
 
     // Compute dot product of zmm and xmy
-    T ret = 0.0;
-    for (size_t i = 0; i < zmm.size(); ++i)
-    {
+    T ret = T(0);
+    for (size_t i = 0; i < zmm.size(); ++i) {
         ret += zmm[i] * xmy[i];
     }
 
     // Compute distances
     T dxy = vectorDistance(x_begin, x_end, y_begin);
-    T doz = (dxy != 0.0) ? std::fabs(ret / dxy) : 0.0;
+    T doz = (dxy != T(0)) ? std::fabs(ret / dxy) : T(0);
     T dmz = vectorDistance(m.begin(), m.end(), z_begin);
 
     // Ensure non-negative terms for square roots
-    T term1 = (r * r - doz * doz > 0.0) ? sqrt(r * r - doz * doz) : 0.0;
-    T term2 = (dmz * dmz - doz * doz > 0.0) ? sqrt(dmz * dmz - doz * doz) : 0.0;
+    T term1 = (r * r - doz * doz > T(0)) ? std::sqrt(r * r - doz * doz) : T(0);
+    T term2 = (dmz * dmz - doz * doz > T(0)) ? std::sqrt(dmz * dmz - doz * doz) : T(0);
 
     // Final computation
-    d = (term1 - term2) * (term1 - term2) + dxy * dxy / 4;
+    d = (term1 - term2) * (term1 - term2) + dxy * dxy / T(4);
 
     // Return result
-    return d > 0.0 ? sqrt(d) : 0.0;
-}
-
-long double Hausdorff
-(
-  std::vector< std::vector<long double> >& S,
-  std::vector< std::vector<long double> >& T
-)
-{
-
-  long double dist = 0.0;
-  long double max = 0.0;
-  long double min = 1000.0;
-  long double M;
-
-  for (int i = 0; i < S.size(); i++)
-  {
-    for (int j = 0; j < T.size(); j++)
-    {
-      dist = vectorDistance(S[i].begin(),S[i].end(),T[j].begin());
-      if(dist < min)
-      {
-        min = dist;
-      }
-    }
-    if(max < min)
-    {
-      max = min;
-    }
-  }
-
-  M = max;
-  max = 0.0;
-  min = 1000.0;
-  
-  for (int i = 0; i < T.size(); i++)
-  {
-    for (int j = 0; j < S.size(); j++)
-    {
-      dist = vectorDistance(T[i].begin(),T[i].end(),S[j].begin());
-      if(dist < min)
-      {
-        min = dist;
-      }
-    }
-    if(max < min)
-    {
-      max = min;
-    }
-  }
-
-
-  if (M < max)
-  {
-    return max;
-  }
-  else
-  {
-    return M;
-  }
-
+    return d > T(0) ? std::sqrt(d) : T(0);
 }

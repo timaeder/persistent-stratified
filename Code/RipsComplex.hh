@@ -1,465 +1,168 @@
 #pragma once
 #include <iostream>
-#include <fstream>
+#include <vector>
 #include <list>
-#include <map>
 #include <unordered_map>
 #include <set>
-#include <vector>
-#include <queue>
 #include <cmath>
 #include <algorithm>
 #include "unordered_map.hpp"
-#include <sstream>
-#include <cmath>
-#include <cstdlib>
-#include <string>
-#include <stdexcept>
 #include "Neighborhood.hh"
 #include "my_hasher.hh"
 #include "ksubset.hh"
 
+/**
+ * @brief Represents a simplex in a simplicial complex.
+ */
+class Simplex {
+public:
+    std::vector<int> vertices;  // Indices of the vertices forming the simplex
+    long double diameter;       // Diameter of the simplex
 
-using namespace std;
+    /**
+     * @brief Constructor for a simplex.
+     * @param vertices Indices of the vertices forming the simplex.
+     * @param diameter Diameter of the simplex.
+     */
+    Simplex(const std::vector<int>& vertices, long double diameter)
+        : vertices(vertices), diameter(diameter) {}
 
-struct Cplx
-{
-    Cplx()
-    : simplices(), neighborhood(), IDs() {}
-    vector< vector< pair<long double, vector<int> > > > simplices;
-    list<vector< vector<int>>> neighborhood;
-    ska::unordered_map<vector<int>, int, VectorHasher > IDs;
+    /**
+     * @brief Computes the diameter of a simplex.
+     * @param S Input dataset as a vector of vectors (points in space).
+     * @return The diameter of the simplex.
+     */
+    template <typename T>
+    static T computeDiameter(const std::vector<std::vector<T>>& S, const std::vector<int>& vertices) {
+        size_t d = vertices.size();
+        T maxDiameter = T(0);
 
-    Cplx(int n) {simplices = vector< vector< pair<long double,vector<int> > > >(n);};
+        if (d > 1) {
+            for (size_t i = 0; i < d; i++) {
+                for (size_t j = i + 1; j < d; j++) {
+                    T dist = vectorDistance(S[vertices[i]].begin(), S[vertices[i]].end(), S[vertices[j]].begin());
+                    if (dist > maxDiameter) {
+                        maxDiameter = dist;
+                    }
+                }
+            }
+        }
+        return maxDiameter;
+    }
 };
 
-long double SimplexDiameter
-(
-    const vector<vector<long double>>& S,
-    const vector<int>& s
-)
-{
-    int d = s.size();
-    long double maxsofar = 0.0;
-    long double temp = 0.0;
+/**
+ * @brief Represents a simplicial complex.
+ */
+class SimplicialComplex {
+public:
+    std::vector<std::vector<Simplex>> simplices;  // Simplices organized by dimension
+    ska::unordered_map<std::vector<int>, int, VectorHasher> IDs;  // Map of simplex IDs
 
-    if (d > 1)
-    {
-        for (int i = 0; i < d; i++)
-        {
-            for (int j = i+1; j < d; j++)
-            {
-                temp = vectorDistance(S[s[i]].begin(), S[s[i]].end(), S[s[j]].begin());
-                
-                if (temp > maxsofar)
-                {
-                    maxsofar = temp;
-                }
+    /**
+     * @brief Constructor for a simplicial complex.
+     * @param maxDimension Maximum dimension of the simplicial complex.
+     */
+    SimplicialComplex(int maxDimension)
+        : simplices(maxDimension + 1) {}
+
+    /**
+     * @brief Adds a simplex to the complex.
+     * @param simplex The simplex to add.
+     * @param dimension The dimension of the simplex.
+     */
+    void addSimplex(const Simplex& simplex, int dimension) {
+        simplices[dimension].push_back(simplex);
+    }
+
+    /**
+     * @brief Sorts simplices by diameter and assigns IDs.
+     */
+    void finalize() {
+        int count = 0;
+        for (int i = simplices.size() - 1; i >= 0; --i) {
+            std::stable_sort(simplices[i].begin(), simplices[i].end(),
+                [](const Simplex& left, const Simplex& right) {
+                    return left.diameter < right.diameter;
+                });
+
+            for (const auto& simplex : simplices[i]) {
+                IDs[simplex.vertices] = count++;
             }
         }
     }
-    return maxsofar;
-}
 
+    /**
+     * @brief Constructs an incremental Vietoris-Rips complex.
+     * @param S Input dataset as a vector of vectors (points in space).
+     * @param epsilon Neighborhood radius.
+     * @param k Maximum dimension of the simplicial complex.
+     * @param neighborhoodGraph NeighborhoodGraph object.
+     * @return The constructed Vietoris-Rips complex.
+     */
+    template <typename T>
+    static SimplicialComplex constructIncrementalVR(
+        const std::vector<std::vector<T>>& S,
+        const T& epsilon,
+        const int& k,
+        NeighborhoodGraph<T>& neighborhoodGraph
+    ) {
+        // Compute the standard neighborhood graph
+        neighborhoodGraph.computeStandard();
+        auto [graph1, graph2] = neighborhoodGraph.getGraphs();
 
-long double BndSimplexDiameter
-(
-    const vector<vector<long double>>& S,
-    const vector<int>& s,
-    const long double& epsilon
-)
-{
-    int d = s.size();
-    long double maxsofar = 0.0;
-    long double temp = 0.0;
-    std::vector<long double> m(S[0].size());
+        SimplicialComplex VR(k + 1);
 
-    if (d > 1)
-    {
-        for (int i = 0; i < d; i++)
-        {
-            for (int j = i + 1; j < d; j++)
-            {
-                // Compute midpoint (m)
-                auto first = S[s[i]].begin();
-                auto last = S[s[i]].end();
-                auto first2 = S[s[j]].begin();
+        size_t n = graph1.size();
+        std::vector<int> u(1);
 
-                for (size_t it = 0; it < m.size(); it++)
-                {
-                    m[it] = ((*first++) + (*first2++)) / 2;
-                }
-
-                // Use the updated G function
-                if (vectorDistance(m.begin(), m.end(), S[0].begin()) < 0.5 * epsilon)
-                {
-                    temp = BoundaryProjectedDistance(S[s[i]].begin(), S[s[i]].end(), S[s[j]].begin(), S[0].begin(), S[0].end(), 0.5 * epsilon);
-                }
-                else
-                {
-                    temp = 0.5 * vectorDistance(S[s[i]].begin(), S[s[i]].end(), S[s[j]].begin());
-                }
-
-                if (temp > maxsofar)
-                {
-                    maxsofar = temp;
-                }
-            }
+        for (size_t i = 0; i < n; i++) {
+            u[0] = i;
+            addCofaces(S, graph1, k, u, graph1[i], VR);
         }
+
+        VR.finalize();
+        return VR;
     }
-    else
-    {
-        temp = 0.5 * epsilon - vectorDistance(S[s[0]].begin(), S[s[0]].end(), S[0].begin());
-        if (temp > 0)
-        {
-            maxsofar = temp;
+
+private:
+    /**
+     * @brief Adds cofaces to the simplicial complex.
+     * @param S Input dataset as a vector of vectors (points in space).
+     * @param G Neighborhood graph (adjacency list).
+     * @param k Maximum dimension of the simplicial complex.
+     * @param t Current simplex.
+     * @param N Neighboring points.
+     * @param complex Simplicial complex to update.
+     */
+    template <typename T>
+    static void addCofaces(
+        const std::vector<std::vector<T>>& S,
+        const std::vector<std::vector<int>>& G,
+        const int& k,
+        const std::vector<int>& t,
+        const std::vector<int>& N,
+        SimplicialComplex& complex
+    ) {
+        int d = t.size();
+        complex.addSimplex(Simplex(t, Simplex::computeDiameter(S, t)), d - 1);
+
+        if (d > k + 1) {
+            return;
         }
-    }
-    return maxsofar;
-}
 
-
-long double RelSimplexDiameter
-(
-    const vector<vector<long double>>& S,
-    const vector<int>& s,
-    const long double& epsilon
-)
-{
-    int d = s.size();
-    long double maxsofar = 0.0;
-    long double temp = 0.0;
-    vector<vector<int>> T;
-    vector<int> t;
-    vector<int> s2;
-    std::vector<long double> m(S[0].size());
-    std::vector<long double>::const_iterator first;
-    std::vector<long double>::const_iterator last;
-    std::vector<long double>::const_iterator first2;
-
-    if (d > 2)
-    {
-        if (s[d-1] >= S.size())
-        {
-            s2 = s;
-
-            s2.erase(s2.end()-1);
-
-            subset(s2,d-1,2,0,t,T);
-        
-            for(const auto& sigma : T)
-            {
-                first = S[sigma[0]].begin();
-                first2 = S[sigma[1]].begin();
-
-                for (int it = 0; it < m.size(); it++)
-                {
-                    m[it] = ((*first++) + (*first2++))/2;
-                }
-
-                if (vectorDistance(m.begin(), m.end(), S[0].begin()) < 0.5 * epsilon)
-                {
-                    temp = BoundaryProjectedDistance(
-                        S[sigma[0]].begin(), S[sigma[0]].end(),  // Iterators for S[sigma[0]]
-                        S[sigma[1]].begin(),                    // Iterator for S[sigma[1]]
-                        S[0].begin(), S[0].end(),               // Iterators for S[0]
-                        0.5 * epsilon                           // Radius
-                    );
-                }
-
-                else
-                {
-                    temp = 0.5*vectorDistance(S[sigma[0]].begin(), S[sigma[0]].end(), S[sigma[1]].begin());
-                }
-                
-                if (temp > maxsofar)
-                {
-                    maxsofar = temp; 
-                }
-            }
-        }
-        else
-        {
-            subset(s,d,2,0,t,T);
-        
-            for(const auto& sigma : T)
-            {
-                temp = 0.5*vectorDistance(S[sigma[0]].begin(),S[sigma[0]].end(),S[sigma[1]].begin());
-
-                if (temp > maxsofar)
-                {
-                    maxsofar = temp; 
-                }
-            }
-        }
-    }
-        
-    else if(d > 1)
-    {
-        if (s[1] < S.size())
-        {
-            maxsofar = 0.5*vectorDistance(S[s[0]].begin(), S[s[0]].end(), S[s[1]].begin());
-        }
-        else
-        {
-            temp = (0.5*epsilon - vectorDistance(S[0].begin(), S[0].end(), S[s[0]].begin()));
-            if (temp > 0)
-                {
-                    maxsofar = temp; 
-                }
-            else
-            {
-                maxsofar = 0.0;
-            }
-        }
-    }
-    return maxsofar;
-}
-
-void AddCofaces
-(
-const vector<vector<long double>>& S, 
-const vector< vector<int>>& G,
-const int& k,
-const vector<int>& t,
-const vector<int>& N,
-vector<vector< pair<long double,vector<int> > > >& V
-)
-{
-    int d = t.size();
-    V[d-1].push_back({SimplexDiameter(S,t),t});
-
-    vector<int> s;
-    
-    if (d > k+1)
-    {
-        return;
-    }
-
-    for(const int& f : N)
-    {
-        if ( (find(t.begin(), t.end(), f) != t.end()) == false )
-        {
-            vector<int> M;
-            s = t;
-            s.push_back(f);
-            set_intersection(
-            N.begin(), N.end(),
-            G[f].begin(), G[f].end(),
-            back_inserter( M ));
-            AddCofaces(S, G, k, s, M, V);
-        }
-    }
-}
-
-void AddRelCofaces
-(
-const vector<vector<long double>>& S,
-const vector< vector<int>>& G,
-const int& k,
-const vector<int>& t,
-const vector<int>& N,
-vector<vector< pair<long double,vector<int> > > >& V,
-const long double epsilon
-)
-{
-    int d = t.size();
-
-    long double diam = RelSimplexDiameter(S,t,epsilon);
-
-    if (diam < 0.5*epsilon)
-    {
-        V[d-1].push_back({diam,t});
-    }
-    else
-    {
-        return;
-    }
-    
-    if (d < k+2)
-    {
-        for(const int& f : N)
-        {
-            if ( (find(t.begin(), t.end(), f) != t.end()) == false )
-            {
-                vector<int> M;
-                vector<int> s = t;
+        for (const int& f : N) {
+            if (std::find(t.begin(), t.end(), f) == t.end()) {
+                std::vector<int> M;
+                std::vector<int> s = t;
                 s.push_back(f);
-                sort(s.begin(),s.end());
-
-                if(s.back() < S.size())
-                {
-                    set_intersection(
+                std::set_intersection(
                     N.begin(), N.end(),
                     G[f].begin(), G[f].end(),
-                    back_inserter( M ));
-                    AddRelCofaces(S, G, k, s, M, V, epsilon);
-                }
-                else
-                {
-                    AddRelCofaces(S, G, k, s, M, V, epsilon);
-                }
-                
+                    std::back_inserter(M)
+                );
+                addCofaces(S, G, k, s, M, complex);
             }
         }
     }
-    return;
-}
-
-void AddBndCofaces
-(
-const vector<vector<long double>>& S,
-const vector< vector<int>>& G,
-const int& k,
-const vector<int>& t,
-const vector<int>& N,
-vector<vector< pair<long double,vector<int> > > >& V,
-const long double epsilon
-)
-{
-    int d = t.size();
-    V[d-1].push_back({BndSimplexDiameter(S,t,epsilon),t});
-
-    if (d < k+2)
-    {
-        for(const int& f : N)
-        {
-            if ( (find(t.begin(), t.end(), f) != t.end()) == false )
-            {
-                vector<int> M;
-                vector<int> s = t;
-                s.push_back(f);
-                sort(s.begin(),s.end());
-                set_intersection(
-                N.begin(), N.end(),
-                G[f].begin(), G[f].end(),
-                back_inserter( M ));
-                AddBndCofaces(S, G, k, s, M, V, epsilon);   
-            }
-        }
-    }
-    return;
-}
-
-Cplx IncrementalVR
-(
-  const vector<vector<long double>>& S,
-  const long double& epsilon,
-  const int& k,
-  const list<vector< vector<int>>>& nbh
-)
-{    
-    Cplx VR(k+2);
-    VR.neighborhood = nbh;
-
-    int n = VR.neighborhood.front().size();
-
-    vector<int> u(1);
-
-    for(int i = 0; i<n; i++)
-    {
-        u[0] = i;
-        AddCofaces(S, (VR.neighborhood).front(), k, u, (VR.neighborhood).front()[i], VR.simplices);
-    }
-
-    int count = 0;
-
-    for (int i = k+1; i>= 0; --i)
-    {
-        stable_sort(VR.simplices[i].begin(), VR.simplices[i].end(), [](const pair<long double,vector<int> >&  left,
-        const pair<long double,vector<int> >&  right) {
-        return left.first < right.first;}
-    );
-        for(vector<pair<long double,vector<int>>>::reverse_iterator simp_it = (VR.simplices[i]).rbegin(); simp_it != VR.simplices[i].rend(); simp_it++)
-        {
-            VR.IDs.emplace(simp_it->second,count);
-            count += 1;
-        }
-    }
-
-return VR;
-}
-
-Cplx RelIncrementalVR
-(
-  const vector<vector<long double>>& S,
-  const int& k,
-  const list<vector< vector<int>>>& nbh,
-  const long double epsilon
-)
-{    
-    Cplx VR(k+2);
-    VR.neighborhood = nbh;
-
-    int n = VR.neighborhood.front().size();
-
-    vector<int> u(1);
-
-    for(int i = 0; i<n; i++)
-    {
-        if((VR.neighborhood).front()[i].size() > 0)
-        {
-            u[0] = (VR.neighborhood).front()[i][0];
-            AddRelCofaces(S, (VR.neighborhood).front(), k, u, (VR.neighborhood).front()[u[0]], VR.simplices, epsilon);
-        }
-    }
-
-    int count = 0;
-
-    for (int i = k+1; i>= 0; --i)
-    {
-        stable_sort(VR.simplices[i].begin(), VR.simplices[i].end(), [](const pair<long double,vector<int> >&  left,
-        const pair<long double,vector<int> >&  right) {
-        return left.first < right.first;});
-
-        for(vector<pair<long double,vector<int>>>::reverse_iterator simp_it = (VR.simplices[i]).rbegin(); simp_it != VR.simplices[i].rend(); simp_it++)
-        {
-            VR.IDs[simp_it->second] = count;
-            count += 1;
-        }
-    }
-
-return VR;
-}
-
-Cplx BndIncrementalVR
-(
-  const vector<vector<long double>>& S,
-  const int& k,
-  const list<vector< vector<int>>>& nbh,
-  const long double epsilon
-)
-{    
-    Cplx VR(k+2);
-    VR.neighborhood = nbh;
-
-    int n = VR.neighborhood.front().size();
-
-    vector<int> u(1);
-
-    for(int i = 0; i<n; i++)
-    {
-        if((VR.neighborhood).front()[i].size() > 0)
-        {
-            u[0] = (VR.neighborhood).front()[i][0];
-            AddBndCofaces(S, (VR.neighborhood).front(), k, u, (VR.neighborhood).front()[u[0]], VR.simplices, epsilon);
-        }
-    }
-
-    int count = 0;
-
-    for (int i = k+1; i>= 0; --i)
-    {
-        stable_sort(VR.simplices[i].begin(), VR.simplices[i].end(), [](const pair<long double,vector<int> >&  left,
-        const pair<long double,vector<int> >&  right) {
-        return left.first < right.first;});
-
-        for(vector<pair<long double,vector<int>>>::reverse_iterator simp_it = (VR.simplices[i]).rbegin(); simp_it != VR.simplices[i].rend(); simp_it++)
-        {
-            VR.IDs[simp_it->second] = count;
-            count += 1;
-        }
-    }
-
-return VR;
-}
+};
