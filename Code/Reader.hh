@@ -1,52 +1,57 @@
 #include <string>
 #include <vector>
-#include <sstream> //istringstream
+#include <sstream> // istringstream
 #include <iostream> // cout
 #include <fstream> // ifstream
- 
-using namespace std;
- 
+#include <stdexcept> // invalid_argument
+
 /**
- * Reads csv file into table, exported as a vector of vector of doubles.
- * @param inputFileName input file name (full path).
- * @return data as vector of vector of doubles.
+ * Reads a CSV file into a table, exported as a vector of vector of a specified numeric type.
+ * @tparam T Numeric type (e.g., float, double, long double).
+ * @param inputFileName Input file name (full path).
+ * @return Data as a vector of vector of the specified numeric type.
  */
-std::vector<std::vector<long double>> parse2DCsvFile(string inputFileName) {
- 
-    vector<vector<long double> > data;
-    ifstream inputFile(inputFileName);
-    int l = 0;
- 
-    while (inputFile) {
-        l++;
-        string s;
-        if (!getline(inputFile, s)) break;
-        if (s[0] != '#') {
-            istringstream ss(s);
-            std::vector<long double> record;
- 
-            while (ss) {
-                string line;
-                if (!getline(ss, line, ','))
-                    break;
-                try {
-                    record.push_back(stold(line));
-                }
-                catch (const std::invalid_argument e) {
-                    cout << "NaN found in file " << inputFileName << " line " << l
-                         << endl;
-                    e.what();
-                }
-            }
- 
-            data.push_back(record);
+template <typename T>
+std::vector<std::vector<T>> parse2DCsvFile(const std::string& inputFileName) {
+    std::vector<std::vector<T>> data;
+    std::ifstream inputFile(inputFileName);
+    if (!inputFile.is_open()) {
+        throw std::invalid_argument("Could not open file: " + inputFileName);
+    }
+
+    std::string line;
+    int lineNumber = 0;
+
+    while (std::getline(inputFile, line)) {
+        lineNumber++;
+        if (line.empty() || line[0] == '#') {
+            continue; // Skip empty lines or comments
         }
+
+        std::istringstream lineStream(line);
+        std::vector<T> record;
+        std::string cell;
+
+        while (std::getline(lineStream, cell, ',')) {
+            try {
+                record.push_back(static_cast<T>(std::stold(cell)));
+            } catch (const std::invalid_argument& e) {
+                std::cerr << "Invalid number found in file " << inputFileName
+                          << " at line " << lineNumber << ": " << cell << std::endl;
+                throw;
+            } catch (const std::out_of_range& e) {
+                std::cerr << "Number out of range in file " << inputFileName
+                          << " at line " << lineNumber << ": " << cell << std::endl;
+                throw;
+            }
+        }
+
+        data.push_back(record);
     }
- 
-    if (!inputFile.eof()) {
-        cerr << "Could not read file " << inputFileName << "\n";
-        __throw_invalid_argument("File not found.");
+
+    if (inputFile.bad()) {
+        throw std::ios_base::failure("Error reading file: " + inputFileName);
     }
- 
+
     return data;
 }
