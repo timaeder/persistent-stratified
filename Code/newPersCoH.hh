@@ -14,18 +14,20 @@
 
 /**
  * @brief Represents a simplex in a simplicial complex.
+ * @tparam T Numeric type for the dataset and computations (e.g., float, double, long double).
  */
+template <typename T>
 class Simplex {
 public:
     std::vector<int> vertices;  // Indices of the vertices forming the simplex
-    long double diameter;       // Diameter of the simplex
+    T diameter;                 // Diameter of the simplex
 
     /**
      * @brief Constructor for a simplex.
      * @param vertices Indices of the vertices forming the simplex.
      * @param diameter Diameter of the simplex.
      */
-    Simplex(const std::vector<int>& vertices, long double diameter)
+    Simplex(const std::vector<int>& vertices, T diameter)
         : vertices(vertices), diameter(diameter) {}
 
     /**
@@ -34,7 +36,6 @@ public:
      * @param vertices Vertices of the simplex.
      * @return The diameter of the simplex.
      */
-    template <typename T>
     static T computeDiameter(const std::vector<std::vector<T>>& S, const std::vector<int>& vertices) {
         size_t d = vertices.size();
         T maxDiameter = T(0);
@@ -59,14 +60,14 @@ public:
      * @param epsilon Neighborhood radius.
      * @return The boundary-projected diameter of the simplex.
      */
-    static long double computeBoundarySimplexDiameter(
-        const std::vector<std::vector<long double>>& S,
+    static T computeBoundarySimplexDiameter(
+        const std::vector<std::vector<T>>& S,
         const std::vector<int>& vertices,
-        const long double& epsilon
+        const T& epsilon
     ) {
         int d = vertices.size();
-        long double maxDiameter = 0.0;
-        std::vector<long double> m(S[0].size());
+        T maxDiameter = T(0);
+        std::vector<T> m(S[0].size());
 
         if (d > 1) {
             for (int i = 0; i < d; i++) {
@@ -77,7 +78,7 @@ public:
                         m[it] = ((*first++) + (*first2++)) / 2;
                     }
 
-                    long double dist;
+                    T dist;
                     if (vectorDistance(m.begin(), m.end(), S[0].begin()) < 0.5 * epsilon) {
                         dist = BoundaryProjectedDistance(S[vertices[i]].begin(), S[vertices[i]].end(), S[vertices[j]].begin(), S[0].begin(), S[0].end(), 0.5 * epsilon);
                     } else {
@@ -87,7 +88,7 @@ public:
                 }
             }
         } else {
-            long double dist = 0.5 * epsilon - vectorDistance(S[vertices[0]].begin(), S[vertices[0]].end(), S[0].begin());
+            T dist = 0.5 * epsilon - vectorDistance(S[vertices[0]].begin(), S[vertices[0]].end(), S[0].begin());
             if (dist > 0) {
                 maxDiameter = dist;
             }
@@ -102,32 +103,32 @@ public:
      * @param epsilon Neighborhood radius.
      * @return The relative diameter of the simplex.
      */
-    static long double computeRelativeSimplexDiameter(
-        const std::vector<std::vector<long double>>& S,
+    static T computeRelativeSimplexDiameter(
+        const std::vector<std::vector<T>>& S,
         const std::vector<int>& vertices,
-        const long double& epsilon
+        const T& epsilon
     ) {
         int d = vertices.size();
-        long double maxDiameter = 0.0;
-        std::vector<std::vector<int>> T;
+        T maxDiameter = T(0);
+        std::vector<std::vector<int>> T_subsets;
         std::vector<int> t;
         std::vector<int> s2;
-        std::vector<long double> m(S[0].size());
+        std::vector<T> m(S[0].size());
 
         if (d > 2) {
             if (vertices[d - 1] >= S.size()) {
                 s2 = vertices;
                 s2.erase(s2.end() - 1);
-                subset(s2, d - 1, 2, 0, t, T);
+                subset(s2, d - 1, 2, 0, t, T_subsets);
 
-                for (const auto& sigma : T) {
+                for (const auto& sigma : T_subsets) {
                     auto first = S[sigma[0]].begin();
                     auto first2 = S[sigma[1]].begin();
                     for (int it = 0; it < m.size(); it++) {
                         m[it] = ((*first++) + (*first2++)) / 2;
                     }
 
-                    long double dist;
+                    T dist;
                     if (vectorDistance(m.begin(), m.end(), S[0].begin()) < 0.5 * epsilon) {
                         dist = BoundaryProjectedDistance(S[sigma[0]].begin(), S[sigma[0]].end(), S[sigma[1]].begin(), S[0].begin(), S[0].end(), 0.5 * epsilon);
                     } else {
@@ -136,9 +137,9 @@ public:
                     maxDiameter = std::max(maxDiameter, dist);
                 }
             } else {
-                subset(vertices, d, 2, 0, t, T);
-                for (const auto& sigma : T) {
-                    long double dist = 0.5 * vectorDistance(S[sigma[0]].begin(), S[sigma[0]].end(), S[sigma[1]].begin());
+                subset(vertices, d, 2, 0, t, T_subsets);
+                for (const auto& sigma : T_subsets) {
+                    T dist = 0.5 * vectorDistance(S[sigma[0]].begin(), S[sigma[0]].end(), S[sigma[1]].begin());
                     maxDiameter = std::max(maxDiameter, dist);
                 }
             }
@@ -146,8 +147,8 @@ public:
             if (vertices[1] < S.size()) {
                 maxDiameter = 0.5 * vectorDistance(S[vertices[0]].begin(), S[vertices[0]].end(), S[vertices[1]].begin());
             } else {
-                long double dist = (0.5 * epsilon - vectorDistance(S[0].begin(), S[0].end(), S[vertices[0]].begin()));
-                maxDiameter = std::max(static_cast<long double>(0.0), dist);
+                T dist = (0.5 * epsilon - vectorDistance(S[0].begin(), S[0].end(), S[vertices[0]].begin()));
+                maxDiameter = std::max(static_cast<T>(0.0), dist);
             }
         }
         return maxDiameter;
@@ -156,10 +157,12 @@ public:
 
 /**
  * @brief Represents a simplicial complex.
+ * @tparam T Numeric type for the dataset and computations (e.g., float, double, long double).
  */
+template <typename T>
 class SimplicialComplex {
 public:
-    std::vector<std::vector<Simplex>> simplices;  // Simplices organized by dimension
+    std::vector<std::vector<Simplex<T>>> simplices;  // Simplices organized by dimension
     ska::unordered_map<std::vector<int>, int, VectorHasher> IDs;  // Map of simplex IDs
     std::list<std::vector<std::vector<int>>> neighborhood; // Neighborhood structure
 
@@ -175,7 +178,7 @@ public:
      * @param simplex The simplex to add.
      * @param dimension The dimension of the simplex.
      */
-    void addSimplex(const Simplex& simplex, int dimension) {
+    void addSimplex(const Simplex<T>& simplex, int dimension) {
         simplices[dimension].push_back(simplex);
     }
 
@@ -186,7 +189,7 @@ public:
         int count = 0;
         for (int i = simplices.size() - 1; i >= 0; --i) {
             std::stable_sort(simplices[i].begin(), simplices[i].end(),
-                [](const Simplex& left, const Simplex& right) {
+                [](const Simplex<T>& left, const Simplex<T>& right) {
                     return left.diameter < right.diameter;
                 });
 
@@ -205,14 +208,14 @@ public:
      * @param N Neighboring vertices.
      */
     void addCofaces(
-        const std::vector<std::vector<long double>>& S,
+        const std::vector<std::vector<T>>& S,
         const std::vector<std::vector<int>>& G,
         const int& k,
         const std::vector<int>& t,
         const std::vector<int>& N
     ) {
         int d = t.size();
-        simplices[d - 1].emplace_back(Simplex::computeDiameter(S, t), t);
+        simplices[d - 1].emplace_back(Simplex<T>::computeDiameter(S, t), t);
 
         if (d > k + 1) {
             return;
@@ -239,15 +242,15 @@ public:
      * @param epsilon Neighborhood radius.
      */
     void addRelativeCofaces(
-        const std::vector<std::vector<long double>>& S,
+        const std::vector<std::vector<T>>& S,
         const std::vector<std::vector<int>>& G,
         const int& k,
         const std::vector<int>& t,
         const std::vector<int>& N,
-        const long double epsilon
+        const T epsilon
     ) {
         int d = t.size();
-        long double diam = Simplex::computeRelativeSimplexDiameter(S, t, epsilon);
+        T diam = Simplex<T>::computeRelativeSimplexDiameter(S, t, epsilon);
 
         if (diam < 0.5 * epsilon) {
             simplices[d - 1].emplace_back(diam, t);
@@ -284,15 +287,15 @@ public:
      * @param epsilon Neighborhood radius.
      */
     void addBoundaryCofaces(
-        const std::vector<std::vector<long double>>& S,
+        const std::vector<std::vector<T>>& S,
         const std::vector<std::vector<int>>& G,
         const int& k,
         const std::vector<int>& t,
         const std::vector<int>& N,
-        const long double epsilon
+        const T epsilon
     ) {
         int d = t.size();
-        simplices[d - 1].emplace_back(Simplex::computeBoundarySimplexDiameter(S, t, epsilon), t);
+        simplices[d - 1].emplace_back(Simplex<T>::computeBoundarySimplexDiameter(S, t, epsilon), t);
 
         if (d < k + 2) {
             for (const int& f : N) {
@@ -316,13 +319,13 @@ public:
      * @param nbh Neighborhood graph.
      * @return The constructed Vietoris-Rips complex.
      */
-    SimplicialComplex constructIncrementalVR(
-        const std::vector<std::vector<long double>>& S,
-        const long double epsilon,
+    SimplicialComplex<T> constructIncrementalVR(
+        const std::vector<std::vector<T>>& S,
+        const T epsilon,
         const int k,
         const std::list<std::vector<std::vector<int>>>& nbh
     ) {
-        SimplicialComplex VR(k + 2);
+        SimplicialComplex<T> VR(k + 2);
         VR.neighborhood = nbh;
 
         int n = VR.neighborhood.front().size();
@@ -345,13 +348,13 @@ public:
      * @param epsilon Neighborhood radius.
      * @return The constructed relative Vietoris-Rips complex.
      */
-    SimplicialComplex constructRelativeIncrementalVR(
-        const std::vector<std::vector<long double>>& S,
+    SimplicialComplex<T> constructRelativeIncrementalVR(
+        const std::vector<std::vector<T>>& S,
         const int k,
         const std::list<std::vector<std::vector<int>>>& nbh,
-        const long double epsilon
+        const T epsilon
     ) {
-        SimplicialComplex VR(k + 2);
+        SimplicialComplex<T> VR(k + 2);
         VR.neighborhood = nbh;
 
         int n = VR.neighborhood.front().size();
@@ -376,13 +379,13 @@ public:
      * @param epsilon Neighborhood radius.
      * @return The constructed boundary Vietoris-Rips complex.
      */
-    SimplicialComplex constructBoundaryIncrementalVR(
-        const std::vector<std::vector<long double>>& S,
+    SimplicialComplex<T> constructBoundaryIncrementalVR(
+        const std::vector<std::vector<T>>& S,
         const int k,
         const std::list<std::vector<std::vector<int>>>& nbh,
-        const long double epsilon
+        const T epsilon
     ) {
-        SimplicialComplex VR(k + 2);
+        SimplicialComplex<T> VR(k + 2);
         VR.neighborhood = nbh;
 
         int n = VR.neighborhood.front().size();
@@ -459,11 +462,11 @@ public:
      * @return Relative coboundary indices.
      */
     std::vector<int> computeRelativeCoboundary(
-        const std::vector<std::vector<long double>>& S,
+        const std::vector<std::vector<T>>& S,
         const std::vector<int>& s,
         const std::vector<std::vector<int>>& N,
         const int& n,
-        const long double epsilon
+        const T epsilon
     ) {
         int k = s.size() - 1;
         std::vector<int> cobound;
@@ -495,7 +498,7 @@ public:
                             if (t.back() != conept) {
                                 cobound.push_back(IDs.find(t)->second);
                             } else {
-                                if (Simplex::computeDiameter(S, t) < 0.5 * epsilon) {
+                                if (Simplex<T>::computeDiameter(S, t) < 0.5 * epsilon) {
                                     cobound.push_back(IDs.find(t)->second);
                                 }
                             }
@@ -533,14 +536,14 @@ public:
      * @param nbh Neighborhood graph.
      * @return Vector of copairings.
      */
-    std::vector<std::vector<std::pair<long double, long double>>> computeCopairings(
-        const std::vector<std::vector<long double>>& S,
-        const long double& epsilon,
+    std::vector<std::vector<std::pair<T, T>>> computeCopairings(
+        const std::vector<std::vector<T>>& S,
+        const T& epsilon,
         const int& k,
         const std::list<std::vector<std::vector<int>>>& nbh
     ) {
         int n = simplices.size();
-        std::vector<std::vector<std::pair<long double, long double>>> copairs(n);
+        std::vector<std::vector<std::pair<T, T>>> copairs(n);
 
         int full_size = IDs.size();
         int curr_size = 0;
@@ -578,7 +581,7 @@ public:
                     redcols[id1] = cbID1;
 
                     if (cbID1.size()) {
-                        int pivot1 = cbID1.back();  // Declare and initialize pivot1 here
+                        int pivot1 = cbID1.back();
                         redrows[pivot1].insert(id1);
                         if (redcols[*cbID1.rbegin()].size()) {
                             if (std::abs(simplices[d + 1][full_size - curr_size - *cbID1.rbegin() - 1].diameter - simp_it1->diameter) > 0.0001) {
@@ -604,17 +607,17 @@ public:
      * @param rad Radius.
      * @return Vector of local copairings.
      */
-    std::vector<std::vector<std::pair<long double, long double>>> computeLocalCopairings(
-        const std::vector<std::vector<long double>>& S,
+    std::vector<std::vector<std::pair<T, T>>> computeLocalCopairings(
+        const std::vector<std::vector<T>>& S,
         const int& k,
-        const std::vector<long double>& z,
-        const long double rad
+        const std::vector<T>& z,
+        const T rad
     ) {
-        std::vector<std::pair<long double, std::vector<long double>>> FiltPts;
-        long double epsilon = rad;
+        std::vector<std::pair<T, std::vector<T>>> FiltPts;
+        T epsilon = rad;
 
         for (const auto& v : S) {
-            long double r = vectorDistance(z.begin(), z.end(), v.begin());
+            T r = vectorDistance(z.begin(), z.end(), v.begin());
             if (r <= rad) {
                 FiltPts.emplace_back(r, v);
             }
@@ -622,22 +625,22 @@ public:
 
         std::stable_sort(FiltPts.begin(), FiltPts.end());
 
-        std::vector<std::vector<long double>> LPC;
+        std::vector<std::vector<T>> LPC;
         for (const auto& v : FiltPts) {
             LPC.push_back(v.second);
         }
 
         // Create an instance of the NeighborhoodGraph class with the dataset and epsilon
-        NeighborhoodGraph<long double> neighborhoodGraph(LPC, rad);
+        NeighborhoodGraph<T> neighborhoodGraph(LPC, rad);
 
         // Compute the CVR neighborhood graph
         neighborhoodGraph.computeCVR();
 
         // Retrieve the computed graphs
-        std::list<std::vector<std::vector<int>>> nbh(neighborhoodGraph.getGraphs().first.begin(), neighborhoodGraph.getGraphs().first.end()); // or .second based on your requirement
+        std::list<std::vector<std::vector<int>>> nbh(neighborhoodGraph.getGraphs().first.begin(), neighborhoodGraph.getGraphs().first.end());
 
         // Use the computed neighborhood in your VR construction
-        SimplicialComplex VR = constructRelativeIncrementalVR(LPC, k, nbh, rad);
+        SimplicialComplex<T> VR = constructRelativeIncrementalVR(LPC, k, nbh, rad);
 
         int n = k + 1;
         for (int i = 0; i <= k + 1; i++) {
@@ -653,7 +656,7 @@ public:
         std::vector<std::vector<int>> redcols(full_size, std::vector<int>{-1});
         std::vector<std::set<int>> redrows(full_size);
 
-        std::vector<std::vector<std::pair<long double, long double>>> LocCopairs(k + 1);
+        std::vector<std::vector<std::pair<T, T>>> LocCopairs(k + 1);
 
         for (int d = 0; d < n; d++) {
             curr_size += VR.simplices[d].size();
@@ -685,10 +688,10 @@ public:
                     redcols[id1] = cbID1;
 
                     if (cbID1.size()) {
-                        int pivot1 = cbID1.back();  // Declare and initialize pivot1 here
+                        int pivot1 = cbID1.back();
                         redrows[pivot1].insert(id1);
                         if (redcols[*cbID1.rbegin()].size()) {
-                            long double pers = std::fabs(VR.simplices[d + 1][full_size - curr_size - *cbID1.rbegin() - 1].diameter - simp_it1->diameter);
+                            T pers = std::fabs(VR.simplices[d + 1][full_size - curr_size - *cbID1.rbegin() - 1].diameter - simp_it1->diameter);
                             if (pers > 0.001) {
                                 LocCopairs[d].emplace_back(simp_it1->diameter, pers);
                             }
@@ -712,17 +715,17 @@ public:
      * @param rad Radius.
      * @return Vector of boundary-projected local copairings.
      */
-    std::vector<std::vector<std::pair<long double, long double>>> computeBoundaryLocalCopairings(
-        const std::vector<std::vector<long double>>& S,
+    std::vector<std::vector<std::pair<T, T>>> computeBoundaryLocalCopairings(
+        const std::vector<std::vector<T>>& S,
         const int& k,
-        const std::vector<long double>& z,
-        const long double rad
+        const std::vector<T>& z,
+        const T rad
     ) {
-        std::vector<std::pair<long double, std::vector<long double>>> FiltPts;
-        long double epsilon = rad;
+        std::vector<std::pair<T, std::vector<T>>> FiltPts;
+        T epsilon = rad;
 
         for (const auto& v : S) {
-            long double r = vectorDistance(z.begin(), z.end(), v.begin());
+            T r = vectorDistance(z.begin(), z.end(), v.begin());
             if (r <= rad) {
                 FiltPts.emplace_back(r, v);
             }
@@ -730,13 +733,13 @@ public:
 
         std::stable_sort(FiltPts.begin(), FiltPts.end());
 
-        std::vector<std::vector<long double>> LPC;
+        std::vector<std::vector<T>> LPC;
         for (const auto& v : FiltPts) {
             LPC.push_back(v.second);
         }
 
         // Create an instance of the NeighborhoodGraph class for the dataset and radius
-        NeighborhoodGraph<long double> neighborhoodGraph(LPC, rad);
+        NeighborhoodGraph<T> neighborhoodGraph(LPC, rad);
 
         // Compute the boundary-projected neighborhood graph
         neighborhoodGraph.computeBoundary();
@@ -745,7 +748,7 @@ public:
         std::list<std::vector<std::vector<int>>> nbh(neighborhoodGraph.getGraphs().first.begin(), neighborhoodGraph.getGraphs().first.end());
 
         // Construct the boundary incremental VR complex using the converted neighborhood graph
-        SimplicialComplex VR = constructBoundaryIncrementalVR(LPC, k, nbh, rad);
+        SimplicialComplex<T> VR = constructBoundaryIncrementalVR(LPC, k, nbh, rad);
 
         int n = k + 1;
         for (int i = 0; i <= k + 1; i++) {
@@ -759,7 +762,7 @@ public:
         int curr_size = 0;
         std::vector<std::vector<int>> redcols(full_size, std::vector<int>{-1});
         std::vector<std::set<int>> redrows(full_size);
-        std::vector<std::vector<std::pair<long double, long double>>> LocCopairs(k + 1);
+        std::vector<std::vector<std::pair<T, T>>> LocCopairs(k + 1);
 
         for (int d = 0; d < n; d++) {
             curr_size += VR.simplices[d].size();
@@ -790,11 +793,11 @@ public:
                     redcols[id1] = cbID1;
 
                     if (cbID1.size()) {
-                        int pivot1 = cbID1.back();  // Declare and initialize pivot1 here
+                        int pivot1 = cbID1.back();
                         redrows[pivot1].insert(id1);
-                    
+
                         if (redcols[*cbID1.rbegin()].size()) {
-                            long double pers = std::abs(VR.simplices[d + 1][full_size - curr_size - *cbID1.rbegin() - 1].diameter - simp_it1->diameter);
+                            T pers = std::abs(VR.simplices[d + 1][full_size - curr_size - *cbID1.rbegin() - 1].diameter - simp_it1->diameter);
                             if (pers > 0.001) {
                                 LocCopairs[d].emplace_back(simp_it1->diameter, pers);
                             }
