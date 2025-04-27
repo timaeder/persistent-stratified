@@ -34,8 +34,11 @@ int main() {
     for (size_t i = 0; i < data.size(); i++) {
         std::vector<long double> z = data[i];
 
-        // Create an instance of the SimplicialComplex class
-        SimplicialComplex simplicialComplex(n);
+        // Specify the numeric type you want to use, e.g., float, double, or long double
+        using NumericType = long double;
+
+        // Create an instance of the SimplicialComplex class with the specified numeric type
+        SimplicialComplex<NumericType> simplicialComplex(n);
 
         // Compute local copairings using updated method
         std::vector<std::vector<std::pair<long double, long double>>> LCP = simplicialComplex.computeLocalCopairings(data, n, z, rad);
