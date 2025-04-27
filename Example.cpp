@@ -3,10 +3,8 @@
 #include <string>
 #include <vector>
 #include <iomanip>
-#include "Code/PersCoH.hh"
-// For parallelization
-#include "Code/par_for.hh"
-#include "Code/Reader.hh"
+#include "Code/newPersCoH.hh" // Updated to include newPersCoH.hh
+#include "Code/Reader.hh"    // For parsing input data
 
 int main()
 {
@@ -34,7 +32,7 @@ int main()
     {
         std::vector<long double> z = data[i];
 
-        // Compute local copairings
+        // Compute local copairings using the updated CLocGCopairings function
         std::vector<std::vector<std::pair<long double, long double>>> LCP = CLocGCopairings(data, n, z, rad);
 
         // Output results to a file
