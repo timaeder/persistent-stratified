@@ -161,12 +161,12 @@ def main():
     #Insert name of the point cloud data as dataname and the output of the local homology computations as pairname.
     #If the data is not in the same repository as this python script, please specify path_data and path_output.
 
-    DC = LocCoH_read(dataname="R2Data.txt",pairname = "LocCoHR2_output",
+    DC = LocCoH_read(dataname="CrossData.txt",pairname = "LocCoHCross_output",
                      path_data="Data/", path_output="Data/")
     
-    X = np.genfromtxt("Data/R2Data.txt",delimiter=",")
+    X = np.genfromtxt("Data/CrossData.txt",delimiter=",")
 
-    Phi = PhiPLH(DC[1],DC[3])
+    Phi = PhiPLH(DC[0],DC[1])
 
     plot_data(X,HL=Phi[1])
 
