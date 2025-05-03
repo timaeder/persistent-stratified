@@ -33,11 +33,11 @@ Run the compiled program using the following command:
 
 The program will prompt you for the following inputs:
 
-#### Input File Path
+##### Input File Path
 Enter the path to the data file containing the dataset.
 The file should be in CSV format, where each row represents a point in Euclidean space.
 
-Example:
+**Example:**
 ```bash
 Enter the path to the data file: Data\CrossData.txt
 ```
@@ -45,24 +45,24 @@ Enter the path to the data file: Data\CrossData.txt
 ##### Maximum Radius
 Enter the maximum radius (a positive floating-point number) for constructing the Vietoris-Rips complex.
 
-Example:
+**Example:**
 ```bash
 Enter the maximum radius (double type, e.g., 0.1): 0.1
 ```
 
-#### Maximum Dimension
+##### Maximum Dimension
 Enter the maximum dimension (a non-negative integer) for simplices in the complex.
 
-Example:
+**Example:**
 ```bash
 Enter the maximum dimension (integer type): 1
 ```
 
-#### Output Directory
+##### Output Directory
 Enter the directory where the output files should be saved.
 If you press Enter without specifying a directory, the program will use the current directory.
 
-Example:
+**Example:**
 ```bash
 Enter the output directory (press Enter to use the current directory): Output/
 ```
@@ -72,7 +72,7 @@ The program generates one output file per point in the dataset.
 Each file contains the local cohomology pairings for the corresponding point.
 The files are named LocCoH_output<i>.txt, where <i> is the index of the point in the dataset.
 
-Example:
+**Example:**
 ```bash
 Processing complete. Output files have been saved in: Output/
 ```
@@ -91,7 +91,7 @@ The input file should be a CSV file where:
 - Each row represents a point in Euclidean space.  
 - Each column corresponds to a coordinate of the point.  
 
-**Example (Data/CrossData.txt):**
+**Example:**
 ```
 0.0,1.0
 1.0,0.0
