@@ -7,7 +7,7 @@ This project computes **local homology** using **Vietoris-Rips complexes** for a
 
 ## Purpose of the Code
 
-The primary goal of this project is to implement mathematical concepts from the aforementioned theoretical work and make them accessible for practical applications. The code is designed to analyze the local topological structure of data, enabling the investigation of stratified spaces that arise in real-world datasets.
+The primary goal of this project is to implement mathematical concepts from the aforementioned theoretical work and make them accessible for practical applications. The code is designed to analyze the local topological structure of data, enabling the investigation of stratified spaces that arise in real-world datasets. We hope it may also serve as a starting point for researchers and practitioners interested in applying topological methods to investigate stratified spaces in real-world data.
 
 This implementation focuses on constructing **Vietoris-Rips complexes** and computing **local homology** to approximate stratifications. The results can be used to study the geometry and topology of data, particularly in the context of stratification learning.
 
@@ -107,9 +107,6 @@ Each output file contains the local cohomology pairings for a specific point. Th
 
 ### Visualization  
 To visualize the results, a Python script (`LocCoH_plot.py`) is included. This script demonstrates how to process and visualize the output of the example application.  
-
-### Applications  
-This project is particularly suited for stratification learning, where the goal is to analyze the local topological structure of data to identify stratified regions or features. It can also serve as a starting point for researchers and practitioners interested in applying topological methods to investigate stratified spaces in real-world data.
 
 ### Further Information
 For a detailed explanation of the mathematical concepts and methods implemented in this project, please refer to the paper "From Samples to Persistent Stratified Homotopy Types" by Mäder and Waas.

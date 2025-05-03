@@ -4,3 +4,7 @@ Data/
 LocalHomologyApp.exe
 app.exe
 App.exe
+
+# Meta files
+.gitignore
+.gitattributes
