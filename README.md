@@ -22,10 +22,8 @@ This project includes an example application based on **local homology**, which 
 #### 1. Compile the Program
 Use a C++17-compatible compiler to compile the example application:
 ```bash
-g++ -std=c++17 -o LocalHomologyApp [LocalHomologyApp.cpp](http://_vscodecontentref_/0) -I./Code
-
--std=c++17: Ensures compatibility with C++17 features (e.g., std::filesystem).
--I./Code: Includes the directory containing the required header files (e.g., PersCoH.hh, Reader.hh).
+g++ -O3 LocalHomologyApp.cpp -o LocalHomologyApp
+```
 
 #### 2. Run the Program
 Run the compiled program using the following command:
@@ -35,41 +33,51 @@ Run the compiled program using the following command:
 
 The program will prompt you for the following inputs:
 
-Input File Path
+#### Input File Path
 Enter the path to the data file containing the dataset.
 The file should be in CSV format, where each row represents a point in Euclidean space.
 
-example:
-Enter the path to the data file: [CrossData.txt](http://_vscodecontentref_/1)
+Example:
+```bash
+Enter the path to the data file: Data\CrossData.txt
+```
 
-Maximum Radius
+##### Maximum Radius
 Enter the maximum radius (a positive floating-point number) for constructing the Vietoris-Rips complex.
 
-example:
+Example:
+```bash
 Enter the maximum radius (double type, e.g., 0.1): 0.1
+```
 
-Maximum Dimension
+#### Maximum Dimension
 Enter the maximum dimension (a non-negative integer) for simplices in the complex.
 
-example:
+Example:
+```bash
 Enter the maximum dimension (integer type): 1
+```
 
-Output Directory
+#### Output Directory
 Enter the directory where the output files should be saved.
 If you press Enter without specifying a directory, the program will use the current directory.
 
-example:
+Example:
+```bash
 Enter the output directory (press Enter to use the current directory): Output/
+```
 
-3. Output
+#### 3. Output
 The program generates one output file per point in the dataset.
 Each file contains the local cohomology pairings for the corresponding point.
 The files are named LocCoH_output<i>.txt, where <i> is the index of the point in the dataset.
 
 Example:
+```bash
 Processing complete. Output files have been saved in: Output/
+```
 
-4. Error Handling  
+#### 4. Error Handling  
 The program includes robust error handling:
 
 - Checks if the input file exists.  
@@ -92,9 +100,10 @@ The input file should be a CSV file where:
 
 ### Output File Format  
 Each output file contains the local cohomology pairings for a specific point. The format is:
-
+```
 0.000000,0.100000,0
 0.050000,0.150000,1
+```
 
 ### Visualization  
 To visualize the results, a Python script (`LocCoH_plot.py`) is included. This script demonstrates how to process and visualize the output of the example application.  
