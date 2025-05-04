@@ -8,3 +8,4 @@ App.exe
 # Meta files
 .gitignore
 .gitattributes
+.vscode

@@ -161,8 +161,8 @@ def main():
     #Insert name of the point cloud data as dataname and the output of the local homology computations as pairname.
     #If the data is not in the same repository as this python script, please specify path_data and path_output.
 
-    DC = LocCoH_read(dataname="CrossData.txt",pairname = "LocCoHCross_output",
-                     path_data="Data/", path_output="Data/")
+    DC = LocCoH_read(dataname="CrossData.txt",pairname = "LocCoH_output",
+                     path_data="Data/", path_output="Data2/")
     
     X = np.genfromtxt("Data/CrossData.txt",delimiter=",")
 
