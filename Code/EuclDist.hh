@@ -3,16 +3,16 @@
 #include <vector>
 #include <iostream>
 #include <algorithm>
+#include <type_traits> // For std::remove_const
+
 
 template<class Iter_T1, class Iter_T2>
-typename std::iterator_traits<Iter_T1>::value_type vectorDistance
-(
+typename std::remove_const<typename std::iterator_traits<Iter_T1>::value_type>::type vectorDistance(
     Iter_T1 first,
     Iter_T1 last,
     Iter_T2 first2
-)
-{
-    using T = typename std::iterator_traits<Iter_T1>::value_type;
+) {
+    using T = typename std::remove_const<typename std::iterator_traits<Iter_T1>::value_type>::type;
 
     T ret = T{0};
     while (first != last) {
@@ -23,14 +23,13 @@ typename std::iterator_traits<Iter_T1>::value_type vectorDistance
 }
 
 template <typename Iter_T>
-typename std::iterator_traits<Iter_T>::value_type BoundaryProjectedDistance(
+typename std::remove_const<typename std::iterator_traits<Iter_T>::value_type>::type BoundaryProjectedDistance(
     Iter_T x_begin, Iter_T x_end,
     Iter_T y_begin,
     Iter_T z_begin, Iter_T z_end,
     const typename std::iterator_traits<Iter_T>::value_type& r
-)
-{
-    using T = typename std::iterator_traits<Iter_T>::value_type;
+) {
+    using T = typename std::remove_const<typename std::iterator_traits<Iter_T>::value_type>::type;
 
     T d = T{0};
 

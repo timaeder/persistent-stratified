@@ -162,13 +162,13 @@ def main():
     #If the data is not in the same repository as this python script, please specify path_data and path_output.
 
     DC = LocCoH_read(dataname="CrossData.txt",pairname = "LocCoH_output",
-                     path_data="Data/", path_output="Data2/")
+                     path_data="Data/", path_output="Data/")
     
     X = np.genfromtxt("Data/CrossData.txt",delimiter=",")
 
     Phi = PhiPLH(DC[0],DC[1])
 
-    plot_data(X,HL=Phi[1])
+    plot_data(X,HL=Phi[0])
 
 
 if __name__ == "__main__":

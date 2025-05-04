@@ -158,7 +158,7 @@ void AddBndry(vector<int>& cbID1, vector<int>& cbID2)
 vector < vector< pair< long double, long double > > > Copairings
 (
     const vector<vector<long double>>& S,
-    const Cplx& VR,
+    const Cplx<long double>& VR,
     const long double& epsilon,
     const int& k, 
     const list<vector< vector<int>>>& nbh
@@ -294,7 +294,7 @@ vector < vector< pair<long double, long double > > > CLocGCopairings
         LPC.push_back(v.second);
     }
 
-    Cplx VR;
+    Cplx<long double> VR;
 
     list<vector< vector<int>>> nbh;
 
@@ -456,7 +456,7 @@ vector < vector< pair<long double, long double > > > BndLocGCopairings
         LPC.push_back(v.second);
     }
 
-    Cplx VR;
+    Cplx<long double> VR;
 
     list<vector< vector<int>>> nbh;
 

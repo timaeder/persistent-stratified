@@ -91,7 +91,7 @@ int main()
     std::string fileprefix = "LocCoH_output";
 
     // Process each point in the dataset
-    for (size_t i = 0; i < data.size(); i++)
+    pl::async_par_for(0, data.size(), [&](unsigned i)
     {
         std::vector<long double> z = data[i];
 
@@ -104,24 +104,27 @@ int main()
         myfile.open(filename);
         if (!myfile.is_open())
         {
-            std::cerr << "Error: Could not open file " << filename << std::endl;
-            continue;
+            std::cerr << "Error: Could not open file " << filename << " Skipping file." << std::endl;
         }
 
-        myfile << std::fixed << std::setprecision(6);
-        for (size_t j = 0; j < LCP.size(); j++)
+        if (myfile.is_open())
         {
-            if (!LCP[j].empty())
+            myfile << std::fixed << std::setprecision(6);
+            for (size_t j = 0; j < LCP.size(); j++)
             {
-                std::cout << "Total amount of local " << j << "-pairs: " << LCP[j].size() << std::endl;
-                for (const auto& pair : LCP[j])
+                if (!LCP[j].empty())
                 {
-                    myfile << pair.first << "," << pair.second << "," << j << std::endl;
+                    std::cout << "Total amount of local " << j << "-pairs: " << LCP[j].size() << std::endl;
+                    for (const auto& pair : LCP[j])
+                    {
+                        myfile << pair.first << "," << pair.second << "," << j << std::endl;
+                    }
                 }
             }
+            myfile.close();
         }
-        myfile.close();
-    }
+    });
+    //change ending to },false); for an ordinary for-loop
 
     std::cout << "Processing complete. Output files have been saved in: " << output_dir << std::endl;
 
