@@ -1,0 +1,11 @@
+# Ignore the entire Data folder
+Data/
+# Ignore the produced executables
+LocalHomologyApp.exe
+app.exe
+App.exe
+
+# Meta files
+.gitignore
+.gitattributes
+.vscode

@@ -3,84 +3,71 @@
 #include <vector>
 #include <iostream>
 #include <algorithm>
-#include <functional>
-#include <numeric>
-
-/*
-vectorDistance is more or less taken from:
-
-C++ Cookbook
-by D. Ryan Stephens, Christopher Diggins, Jonathan Turkanis, Jeff Cogswell
-Released November 2005
-Publisher(s): O'Reilly Media, Inc.
-ISBN: 9780596007614
-
-*/
+#include <type_traits> // For std::remove_const
 
 
-template<class Iter> typename std::iterator_traits<Iter>::value_type 
-vectorDistance(Iter first, Iter last, Iter first2) {
-  typename std::iterator_traits<Iter>::value_type ret = 0.0;
-  while (first != last) {
-    typename std::iterator_traits<Iter>::value_type dist = ((*first++) - (*first2++));
-    ret += (dist * dist);
-  }
-  return ret > 0.0 ? sqrt(ret) : 0.0;
+template<class Iter_T1, class Iter_T2>
+typename std::remove_const<typename std::iterator_traits<Iter_T1>::value_type>::type vectorDistance(
+    Iter_T1 first,
+    Iter_T1 last,
+    Iter_T2 first2
+) {
+    using T = typename std::remove_const<typename std::iterator_traits<Iter_T1>::value_type>::type;
+
+    T ret = T{0};
+    while (first != last) {
+        T dist = ((*first++) - (*first2++));
+        ret += (dist * dist);
+    }
+    return ret > T{0} ? sqrt(ret) : T{0};
 }
 
-template<class T> 
-class midVec
-{
-public:
-    T operator()(T &lhs, const T &rhs) 
-    {
-    return (lhs + rhs)/2;
+template <typename Iter_T>
+typename std::remove_const<typename std::iterator_traits<Iter_T>::value_type>::type BoundaryProjectedDistance(
+    Iter_T x_begin, Iter_T x_end,
+    Iter_T y_begin,
+    Iter_T z_begin, Iter_T z_end,
+    const typename std::iterator_traits<Iter_T>::value_type& r
+) {
+    using T = typename std::remove_const<typename std::iterator_traits<Iter_T>::value_type>::type;
+
+    T d = T{0};
+
+    // Compute dot product of (z - m) and (x - y) on the fly
+    T ret = T{0};
+    T dxy = T{0};
+    T dmz = T{0};
+    T doz = T{0};
+
+    Iter_T x_it = x_begin;
+    Iter_T y_it = y_begin;
+    Iter_T z_it = z_begin;
+
+    while (x_it != x_end && z_it != z_end) {
+        T m = (*x_it + *y_it) / 2; // Midpoint
+        T xmy = *x_it - *y_it;     // Difference vector (x - y)
+        T zmm = *z_it - m;         // Difference vector (z - m)
+
+        ret += zmm * xmy;          // Dot product of (z - m) and (x - y)
+        dxy += xmy * xmy;          // Distance squared between x and y
+        dmz += zmm * zmm;          // Distance squared between z and m
+
+        ++x_it;
+        ++y_it;
+        ++z_it;
     }
-};
 
+    dxy = dxy > T{0} ? sqrt(dxy) : T{0}; // Final distance between x and y
+    doz = (dxy != T{0}) ? std::fabs(ret / dxy) : T{0}; // Projection distance
+    dmz = dmz > T{0} ? sqrt(dmz) : T{0}; // Final distance between z and m
 
-//Function to correctly determine the simplex diameter as in "Approximating Local Homology from Samples" by Skraba and Wang.
-template<class Iter1> typename std::iterator_traits<Iter1>::value_type 
-G
-(
-  Iter1 first1,
-  Iter1 last1,
-  Iter1 first2,
-  Iter1 first3,
-  Iter1 last3,
-  const typename std::iterator_traits<Iter1>::value_type r
-)
-{
-  std::vector<typename std::iterator_traits<Iter1>::value_type> m;
-  std::vector<typename std::iterator_traits<Iter1>::value_type> xmy;
-  std::vector<typename std::iterator_traits<Iter1>::value_type> zmm;
+    // Ensure non-negative terms for square roots
+    T term1 = (r * r - doz * doz > T{0}) ? sqrt(r * r - doz * doz) : T{0};
+    T term2 = (dmz * dmz - doz * doz > T{0}) ? sqrt(dmz * dmz - doz * doz) : T{0};
 
-  std::transform(first1, last1, first2, std::back_inserter(m), midVec<const typename std::iterator_traits<Iter1>::value_type>());
+    // Final computation
+    d = (term1 - term2) * (term1 - term2) + dxy * dxy / 4;
 
-  std::transform(first1, last1, first2, std::back_inserter(xmy), std::minus<const typename std::iterator_traits<Iter1>::value_type>());
-
-  std::transform(first3, last3, m.begin(), std::back_inserter(zmm), std::minus<const typename std::iterator_traits<Iter1>::value_type>());
-
-  Iter1 first = zmm.begin();
-  Iter1 last = zmm.end();
-  Iter1 first_2 = xmy.begin();
-
-  const typename std::iterator_traits<Iter1>::value_type ret
-   = std::inner_product(zmm.begin(), zmm.end(), xmy.begin(), 0);
-  
-  const typename std::iterator_traits<Iter1>::value_type dxy = vectorDistance(first1,last1,first2);
-
-  const typename std::iterator_traits<Iter1>::value_type doz = std::abs(ret/dxy);
-  
-  Iter1 Iter1_m = m.begin();
-  Iter1 Iter2_m = m.end();
-
-  const typename std::iterator_traits<Iter1>::value_type dmz = vectorDistance(Iter1_m,Iter2_m,first3);
-  
-  const typename std::iterator_traits<Iter1>::value_type d
-   = (sqrt(r*r - doz*doz) - sqrt(dmz*dmz - doz*doz))
-      *(sqrt(r*r - doz*doz) - sqrt(dmz*dmz - doz*doz)) 
-      + dxy*dxy/4;
-
-  return d > 0.0 ? sqrt(d) : 0.0;
+    // Return result
+    return d > T{0} ? sqrt(d) : T{0};
 }
