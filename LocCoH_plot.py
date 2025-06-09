@@ -38,12 +38,12 @@ def LocCoH_read(
             if(type(dat[0]) is np.ndarray):
         
                 for j in range(0, len(dat)):
-                    if (dat[j][2] == 1):
+                    if (dat[j][2] == 0):
                         if (dat[j][1] > 0.00001):
                             diag1.append([dat[j][0], dat[j][1]])
                             
                 for j in range(0,len(dat)):
-                    if (dat[j][2] == 2):
+                    if (dat[j][2] == 1):
                         if (dat[j][1] > 0.00001):
                             diag2.append([dat[j][0],dat[j][1]])
         

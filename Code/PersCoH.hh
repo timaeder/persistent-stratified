@@ -14,6 +14,7 @@
 #include <chrono>
 #include <iomanip>
 #include "RipsComplex.hh"
+#include "EdgeCore.hh"
 
 using namespace std;
 
@@ -268,7 +269,8 @@ vector < vector< pair<long double, long double > > > CLocGCopairings
     const vector<vector<long double>>& S,
     const int& k,
     const vector<long double>& z,
-    const long double rad
+    const long double rad,
+    const bool collapse
 )
 {
 
@@ -297,6 +299,7 @@ vector < vector< pair<long double, long double > > > CLocGCopairings
     Cplx<long double> VR;
 
     list<vector< vector<int>>> nbh;
+    list<vector< vector<int>>> cplx_nbh;
 
     int count;
     int step;
@@ -320,7 +323,49 @@ vector < vector< pair<long double, long double > > > CLocGCopairings
 
     nbh = CVRNeighborhood(LPC, rad);
 
-    VR = RelIncrementalVR(LPC, k, nbh, rad);
+    if(collapse)
+    {
+        VR = RelIncrementalVR(LPC, 0, nbh, rad);
+
+        if (VR.simplices[1].size())
+        {
+            vector < vector <int> > E;
+
+            for (const auto& e : VR.simplices[1])
+            {
+                E.push_back(e.second);
+            }
+
+            std::cout << "Starting the edge collapse..." << endl
+                
+            << "Amount of 1-simplices before collapses: " << VR.simplices[1].size() << endl;
+
+            ska::unordered_map< vector<int>, int, VectorHasher > CritID = EdgeFlagCore(E);
+
+            std::cout << "Amount of 1-simplices after collapses: " << CritID.size() << endl;
+
+            vector<vector<int>> Edges;
+
+            for (const auto& e : CritID)
+            {
+                Edges.push_back(e.first);
+            }
+
+            cplx_nbh = RelCplxNbh(Edges, VertexSet(Edges));
+
+            std::cout << "Complex neighborhood built!" << std::endl;
+
+            VR = CritRelIncrementalVR(LPC, k, rad, cplx_nbh, CritID, E);
+
+            std::cout << "New complex built!" << std::endl;
+
+        }
+    }
+
+    else
+    {
+        VR = RelIncrementalVR(LPC, k, nbh, rad);
+    }
 
     int n = k+1;
 
@@ -430,7 +475,8 @@ vector < vector< pair<long double, long double > > > BndLocGCopairings
     const vector<vector<long double>>& S,
     const int& k,
     const vector<long double>& z,
-    const long double rad
+    const long double rad,
+    const bool collapse
 )
 {
 
@@ -481,8 +527,51 @@ vector < vector< pair<long double, long double > > > BndLocGCopairings
     vector< vector < pair<long double, long double > > > LocCopairs(k+1);
 
     nbh = BndNeighborhood(LPC, rad);
+    list<vector< vector<int>>> cplx_nbh;
 
-    VR = BndIncrementalVR(LPC, k, nbh, rad);
+    if(collapse)
+    {
+        VR = BndIncrementalVR(LPC, 0, nbh, rad);
+
+        if (VR.simplices[1].size())
+        {
+            vector < vector <int> > E;
+
+            for (const auto& e : VR.simplices[1])
+            {
+                E.push_back(e.second);
+            }
+
+            std::cout << "Starting the edge collapse..." << endl
+                
+            << "Amount of 1-simplices before collapses: " << VR.simplices[1].size() << endl;
+
+            ska::unordered_map< vector<int>, int, VectorHasher > CritID = EdgeFlagCore(E);
+
+            std::cout << "Amount of 1-simplices after collapses: " << CritID.size() << endl;
+
+            vector<vector<int>> Edges;
+
+            for (const auto& e : CritID)
+            {
+                Edges.push_back(e.first);
+            }
+
+            cplx_nbh = RelCplxNbh(Edges, VertexSet(Edges));
+
+            std::cout << "Complex neighborhood built!" << std::endl;
+
+            VR = CritBndIncrementalVR(LPC, k, rad, cplx_nbh, CritID, E);
+
+            std::cout << "New complex built!" << std::endl;
+
+        }
+    }
+
+    else
+    {
+        VR = BndIncrementalVR(LPC, k, nbh, rad);
+    }
 
     int n = k+1;
 

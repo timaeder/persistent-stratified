@@ -96,7 +96,8 @@ int main()
         std::vector<long double> z = data[i];
 
         // Compute local copairings
-        std::vector<std::vector<std::pair<long double, long double>>> LCP = CLocGCopairings(data, n, z, rad);
+        //std::vector<std::vector<std::pair<long double, long double>>> LCP = CLocGCopairings(data, n, z, rad, true);
+        std::vector<std::vector<std::pair<long double, long double>>> LCP = BndLocGCopairings(data, n, z, rad, true);
 
         // Output results to a file
         std::ofstream myfile;
@@ -123,7 +124,7 @@ int main()
             }
             myfile.close();
         }
-    });
+    },false);
     //change ending to },false); for an ordinary for-loop
 
     std::cout << "Processing complete. Output files have been saved in: " << output_dir << std::endl;
