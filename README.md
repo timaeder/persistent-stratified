@@ -115,6 +115,3 @@ For a detailed explanation of the mathematical concepts and methods implemented 
 Mäder, T., Waas, L. *From samples to persistent stratified homotopy types*.  
 *Journal of Applied and Computational Topology*, 8, 761–838 (2024).  
 [https://doi.org/10.1007/s41468-024-00170-z](https://doi.org/10.1007/s41468-024-00170-z)
-
-If you have any questions or need further assistance, feel free to contact us at:  
-**Email:** [support@persistent-stratified.com](mailto:support@persistent-stratified.com)
